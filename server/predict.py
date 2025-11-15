@@ -10,6 +10,16 @@ from ultralytics import YOLO
 import supervision as sv
 import cv2
 
+# --- Global Model Loading ---
+# Load models once at application startup to avoid reloading on every request.
+print("Loading ML models into memory...")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+YOLO_MODEL = YOLO("yolov8n.pt")
+SAM_MODEL = SamModel.from_pretrained("facebook/sam-vit-huge").to(DEVICE)
+SAM_PROCESSOR = SamProcessor.from_pretrained("facebook/sam-vit-huge")
+print("ML models loaded successfully.")
+# --- End Global Model Loading ---
+
 def show_mask(mask, ax, random_color=False):
     """
     Display a mask on the given axis with optional random color.
@@ -59,18 +69,21 @@ def show_masks_and_boxes_on_image(raw_image, masks, bboxes, save_path):
     gc.collect()
 
 def detect_objects(image: Image, yolo_model):
-    """
-    Detect objects in an image using YOLO model and return the image and bounding boxes.
-    """
+    """Detect objects in an image using the global YOLO model."""
     results = yolo_model(image, conf=0.01)[0]
     results = sv.Detections.from_ultralytics(results).with_nms(threshold=0.05, class_agnostic=True)
     bboxes = [result[0].tolist() for result in results]
     return image, bboxes
 
-def segment_image(raw_image, bboxes, model, processor, device):
+def segment_image(raw_image, bboxes):
     """
-    Segment the image using SAM model and return the masks.
+    Segment the image using the global SAM model and return the masks.
     """
+    # Use the globally loaded models and device
+    device = DEVICE
+    model = SAM_MODEL
+    processor = SAM_PROCESSOR
+
     inputs = processor(raw_image, return_tensors="pt").to(device)
     image_embeddings = model.get_image_embeddings(inputs["pixel_values"])
 
@@ -89,13 +102,8 @@ def segment(image: Image, debug=False, padding=10):
     Segment objects in an image and return segmented images with masks outlined.
     """
     image = Image.fromarray(image)
-    yolo_model = YOLO("yolov8n.pt")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SamModel.from_pretrained("facebook/sam-vit-huge").to(device)
-    processor = SamProcessor.from_pretrained("facebook/sam-vit-huge")
-
-    raw_image, bboxes = detect_objects(image, yolo_model)
-    masks = segment_image(raw_image, bboxes, model, processor, device)
+    raw_image, bboxes = detect_objects(image, YOLO_MODEL)
+    masks = segment_image(raw_image, bboxes)
     if debug:
         if not os.path.exists("./images"):
             os.makedirs("./images")

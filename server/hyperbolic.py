@@ -19,7 +19,11 @@ def get_item_details_from_image(image):
     base64_img = encode_image(image)
 
     api = "https://api.hyperbolic.xyz/v1/chat/completions"
-    api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJvcmNhLnByYW5hdkBnbWFpbC5jb20iLCJpYXQiOjE3MjkzMjA2NTh9.qjszlFbnDKQVXjrNp6eotZnVKbbsM6nc7_cJ36grBT8"
+    # Load API key from environment variables for security
+    api_key = os.getenv("HYPERBOLIC_API_KEY")
+
+    if not api_key:
+        raise ValueError("HYPERBOLIC_API_KEY environment variable not set.")
 
     headers = {
         "Content-Type": "application/json",

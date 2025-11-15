@@ -226,5 +226,6 @@ def delete_from_inventory():
 
     return jsonify({"message": "Images deleted from inventory successfully"}), 200
 
-if __name__ == '__main__':
-    app.run(debug=True, host='localhost', port=5003)
+# This part will be handled by app.py and gunicorn in production
+# if __name__ == '__main__':
+#     app.run(debug=True, host='localhost', port=5003)

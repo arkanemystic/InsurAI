@@ -1,13 +1,17 @@
 import sqlite3
 import uuid
+import os
 
 def generate_uuid():
     """Generate a new UUID."""
     return str(uuid.uuid4())
 
+# Use an environment variable for the database path for deployment flexibility.
+DB_PATH = os.getenv("DATABASE_PATH", "items_and_images.db")
+
 def open_connection():
     """Open a connection to the SQLite database."""
-    return sqlite3.connect('items_and_images.db')
+    return sqlite3.connect(DB_PATH)
 
 def initialize_database():
     """Initialize the database by creating necessary tables."""

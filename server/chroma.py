@@ -3,13 +3,17 @@ import chromadb
 import numpy as np
 import uuid
 from image_embedding import EMBEDDING_DIM_SIZE
+import os
 import blockchain
 def generate_uuid():
     """Generate a new UUID."""
     return str(uuid.uuid4())
 
 # Initialize ChromaDB client
-client = chromadb.HttpClient(host='18.225.156.100', port=8000)
+# Use environment variables for host and port for flexibility in deployment
+CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
+CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
+client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
 
 # Create or get a collection
 collection = client.create_collection("image_vectors", get_or_create=True)
